@@ -1,7 +1,0 @@
-global:
-  scrape_interval: 5s
-
-scrape_configs:
-  - job_name: 'cimb-api'
-    static_configs:
-      - targets: ['api-service:8000']
