@@ -9,7 +9,9 @@ app = FastAPI(title="CIMB Peak Load API")
 redis_client = redis.Redis(host='redis', port=6379, db=0, decode_responses=True)
 
 # Integrasi Prometheus Metrics
-Instrumentator().instrument(app).expose(app)
+Instrumentator(
+    should_group_status_codes=False,
+).instrument(app).expose(app)
 
 def get_db_connection():
     return psycopg2.connect("dbname=cimb_db user=admin password=password host=postgres")
