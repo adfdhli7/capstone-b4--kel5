@@ -19,48 +19,106 @@ type Transaction struct {
 	Status string  `json:"status"`
 }
 
-func main() {
-	time.Sleep(5 * time.Second) // Tunggu DB & Redis siap
+const WORKER_COUNT = 20
 
-	// Koneksi DB
-	db, err := sql.Open("postgres", "postgres://admin:password@postgres:5432/cimb_db?sslmode=disable")
+func main() {
+
+	time.Sleep(5 * time.Second)
+
+	db, err := sql.Open(
+		"postgres",
+		"postgres://admin:password@postgres:5432/cimb_db?sslmode=disable",
+	)
+
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	defer db.Close()
 
-	// Koneksi Redis
-	rdb := redis.NewClient(&redis.Options{Addr: "redis:6379"})
+	rdb := redis.NewClient(&redis.Options{
+		Addr: "redis:6379",
+	})
+
 	ctx := context.Background()
 
-	fmt.Println("Golang Worker Started. Listening to 'tx_queue'...")
+	fmt.Println("Worker Pool Started")
 
+	// Channel antrean internal
+	jobs := make(chan Transaction, 1000)
+
+	// Spawn goroutine worker
+	for i := 0; i < WORKER_COUNT; i++ {
+
+		go worker(i, jobs, db, rdb, ctx)
+	}
+
+	// Dispatcher queue Redis
 	for {
-		// BLPOP: Block sampai ada data di antrean "tx_queue"
+
 		result, err := rdb.BLPop(ctx, 0, "tx_queue").Result()
+
 		if err != nil {
-			log.Println("Error reading queue:", err)
+			log.Println("Redis Error:", err)
 			continue
 		}
 
 		payload := result[1]
-		var tx Transaction
-		json.Unmarshal([]byte(payload), &tx)
 
-		// Simulasi proses bank yang agak memakan waktu (200ms)
-		time.Sleep(200 * time.Millisecond)
+		var tx Transaction
+
+		err = json.Unmarshal([]byte(payload), &tx)
+
+		if err != nil {
+			log.Println("JSON Error:", err)
+			continue
+		}
+
+		jobs <- tx
+	}
+}
+
+func worker(
+	id int,
+	jobs <-chan Transaction,
+	db *sql.DB,
+	rdb *redis.Client,
+	ctx context.Context,
+) {
+
+	for tx := range jobs {
+
+		// simulasi processing
+		time.Sleep(20 * time.Millisecond)
+
 		tx.Status = "SUCCESS"
 
-		// Simpan ke Database
-		_, err = db.Exec("INSERT INTO transactions (id, user_id, amount, status) VALUES ($1, $2, $3, $4)",
-			tx.ID, tx.UserID, tx.Amount, tx.Status)
+		_, err := db.Exec(
+			"INSERT INTO transactions (id, user_id, amount, status) VALUES ($1, $2, $3, $4)",
+			tx.ID,
+			tx.UserID,
+			tx.Amount,
+			tx.Status,
+		)
 
-		if err == nil {
-			// Update Cache menjadi SUCCESS
-			rdb.Set(ctx, "tx_status:"+tx.ID, "SUCCESS", 5*time.Minute)
-			fmt.Printf("Processed TX: %s | User: %d | Amount: %.2f\n", tx.ID, tx.UserID, tx.Amount)
-		} else {
-			log.Println("DB Insert Error:", err)
+		if err != nil {
+
+			log.Printf("Worker %d DB Error: %v", id, err)
+
+			continue
 		}
+
+		rdb.Set(
+			ctx,
+			"tx_status:"+tx.ID,
+			"SUCCESS",
+			5*time.Minute,
+		)
+
+		fmt.Printf(
+			"Worker %d processed TX %s\n",
+			id,
+			tx.ID,
+		)
 	}
-}	
+}

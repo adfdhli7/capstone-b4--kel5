@@ -5,6 +5,10 @@ import { check, sleep } from 'k6';
 export const options = {
   stages: [
     { duration: '10s', target: 50 },  // Pemanasan: naik perlahan ke 50 user aktif
+    { duration: '20s', target: 10 },
+    { duration: '20s', target: 50 },
+    { duration: '20s', target: 100 },
+    { duration: '20s', target: 200 },
     { duration: '30s', target: 300 }, // Peak Load: ledakan ke 300 user aktif secara bersamaan!
     { duration: '10s', target: 0 },   // Pendinginan: turun kembali ke 0
   ],
@@ -21,7 +25,19 @@ export default function () {
   const userId = Math.floor(Math.random() * 8999) + 1000;
   
   // Karena API kita menggunakan Query Parameter, kita masukkan di URL
-  const res = http.post(`${url}?user_id=${userId}&amount=50000`);
+  const res = http.post(
+    `${url}?user_id=${userId}&amount=50000`,
+    null,
+    {
+      tags: {
+        name: 'POST /transaction'
+      }
+    }
+  );
+
+  if (res.status !== 200) {
+    console.log(`Status: ${res.status}`);
+  }
 
   // Pengecekan hasil (Sama seperti Nginx/Python, kita cek lolos atau ditolak)
   check(res, {

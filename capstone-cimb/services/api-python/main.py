@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
-import redis
+import redis.asyncio as redis
 import psycopg2
 import json
 import uuid
@@ -18,7 +18,7 @@ redis_client = redis.Redis(
     socket_connect_timeout=2
 )
 
-MAX_QUEUE_SIZE = 1000
+MAX_QUEUE_SIZE = 10000
 FAILURE_THRESHOLD = 5
 RECOVERY_TIMEOUT = 10
 
@@ -27,9 +27,7 @@ circuit_open = False
 last_failure_time = 0
 
 # Integrasi Prometheus Metrics
-Instrumentator(
-    should_group_status_codes=False,
-).instrument(app).expose(app)
+Instrumentator().instrument(app).expose(app)
 
 def get_db_connection():
     return psycopg2.connect("dbname=cimb_db user=admin password=password host=postgres")
@@ -66,7 +64,7 @@ async def create_transaction(user_id: int, amount: float):
     global failure_count, circuit_open, last_failure_time
 
     # Backpressure Check
-    queue_size = redis_client.llen("tx_queue")
+    queue_size = await redis_client.llen("tx_queue")
 
     if queue_size >= MAX_QUEUE_SIZE:
         return JSONResponse(
@@ -83,16 +81,15 @@ async def create_transaction(user_id: int, amount: float):
     
     # Push ke Redis Queue
     try:
-        redis_with_retry(
-            lambda: redis_client.lpush(
-                "tx_queue",
-                json.dumps(payload)
-            )
+        await redis_client.lpush(
+            "tx_queue",
+            json.dumps(payload)
         )
 
-        failure_count = 0  # Reset failure count on success
+        failure_count = 0
 
     except Exception:
+
         failure_count += 1
 
         if failure_count >= FAILURE_THRESHOLD:
@@ -106,14 +103,12 @@ async def create_transaction(user_id: int, amount: float):
                 "message": "Redis unavailable"
             }
         )
-    
-    # Simpan status sementara di Cache agar bisa langsung di-inquiry
-    redis_with_retry(
-        lambda: redis_client.setex(
-            f"tx_status:{tx_id}",
-            300,
-            "PENDING"
-        )
+
+    # Simpan status sementara di Cache
+    await redis_client.setex(
+        f"tx_status:{tx_id}",
+        300,
+        "PENDING"
     )
     
     return {"message": "Transaction queued", "tx_id": tx_id}
@@ -141,7 +136,7 @@ async def transaction_inquiry(tx_id: str):
     
     raise HTTPException(status_code=404, detail="Transaction not found")
 
-def redis_with_retry(operation, retries=3, delay=1):
+def redis_with_retry(operation, retries=1, delay=1):
     for attempt in range(retries):
         try:
             return operation()
