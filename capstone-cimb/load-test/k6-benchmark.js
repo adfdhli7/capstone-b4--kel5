@@ -15,43 +15,59 @@ export const options = {
   thresholds: {
     // memisahkan target SLO antara Read dan Write menggunakan 'tags'
     'http_req_duration{name:POST /transaction}': ['p(95)<500'], // latency Write p95 
-    'http_req_duration{name:GET /transaction}': ['p(95)<500'],  // latency Read p95 
+    'http_req_duration{name:GET /inquiry}': ['p(95)<500'],      // latency Read p95 (Diperbarui)
   },
 };
 
 export default function () {
-  const url = 'http://localhost:8080/transaction';
+  const url = 'http://localhost:8080';
   
-  // Membuat user_id acak antara 1000 - 9999
+  // membuat user_id acak antara 1000 - 9999
   const userId = Math.floor(Math.random() * 8999) + 1000;
   
-  // bagian write untuk membuat transaksi baru
+  // bagian write untuk melakukan transaksi baru
   const writeRes = http.post(
-    `${url}?user_id=${userId}&amount=50000`,
+    `${url}/transaction?user_id=${userId}&amount=50000`,
     null,
     {
       tags: { name: 'POST /transaction' }
     }
   );
 
-  // bagian read untuk membaca data transaksi yang dibuat
-  const readRes = http.get(
-    `${url}?user_id=${userId}`, 
-    {
-      tags: { name: 'GET /transaction' }
-    }
-  );
-
-  // bagian pengecekan hasil write dan read
+  // Cek hasil Write
   check(writeRes, {
     '📝 Write Status 200 (Masuk Antrean)': (r) => r.status === 200,
-    '🛡️ Write Status 429/503 (Ditolak Nginx)': (r) => r.status === 429 || r.status === 503,
+    '🛡️ Write Status 429/503 (Ditolak Sistem)': (r) => r.status === 429 || r.status === 503,
   });
 
-  check(readRes, {
-    '🔍 Read Status 200 (Sukses Membaca)': (r) => r.status === 200,
-  });
+  // bagian read untuk melakukan inquiry jika write berhasil
+  if (writeRes.status === 200) {
+    let txId = null;
+    
+    // Parse response body untuk mendapatkan tx_id
+    try {
+      const body = writeRes.json();
+      txId = body.tx_id;
+    } catch (e) {
+      console.error('Gagal parsing JSON dari response POST');
+    }
 
-  // mencegah crash
+    // Jika tx_id didapatkan, lakukan inquiry
+    if (txId) {
+      const readRes = http.get(
+        `${url}/inquiry/${txId}`, 
+        {
+          tags: { name: 'GET /inquiry' } // Tag diperbarui agar sesuai threshold
+        }
+      );
+
+      // Cek hasil Read
+      check(readRes, {
+        '🔍 Read Status 200 (Sukses Membaca)': (r) => r.status === 200,
+      });
+    }
+  }
+
+  // mencegah crash dan mengurangi beban CPU k6
   sleep(0.01);
 }
