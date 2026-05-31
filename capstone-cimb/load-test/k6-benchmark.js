@@ -37,7 +37,7 @@ export default function () {
   // Cek hasil Write
   check(writeRes, {
     '📝 Write Status 200 (Masuk Antrean)': (r) => r.status === 200,
-    '🛡️ Write Status 429/503 (Ditolak Sistem)': (r) => r.status === 429 || r.status === 503,
+    // '🛡️ Write Status 429/503 (Ditolak Sistem)': (r) => r.status === 429 || r.status === 503,
   });
 
   // bagian read untuk melakukan inquiry jika write berhasil

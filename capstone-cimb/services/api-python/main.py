@@ -117,7 +117,7 @@ async def create_transaction(user_id: int, amount: float):
 @app.get("/inquiry/{tx_id}")
 async def transaction_inquiry(tx_id: str):
     # 1. Cek Redis Cache dulu (Sangat Cepat)
-    cached_status = redis_client.get(f"tx_status:{tx_id}")
+    cached_status = await redis_client.get(f"tx_status:{tx_id}")
     if cached_status:
         return {"tx_id": tx_id, "status": cached_status, "source": "cache"}
     
