@@ -44,81 +44,72 @@ func main() {
 
 	fmt.Println("Worker Pool Started")
 
-	// Channel antrean internal
-	jobs := make(chan Transaction, 1000)
-
 	// Spawn goroutine worker
 	for i := 0; i < WORKER_COUNT; i++ {
 
-		go worker(i, jobs, db, rdb, ctx)
+		go worker(i, db, rdb, ctx)
 	}
 
-	// Dispatcher queue Redis
-	for {
-
-		result, err := rdb.BLPop(ctx, 0, "tx_queue").Result()
-
-		if err != nil {
-			log.Println("Redis Error:", err)
-			continue
-		}
-
-		payload := result[1]
-
-		var tx Transaction
-
-		err = json.Unmarshal([]byte(payload), &tx)
-
-		if err != nil {
-			log.Println("JSON Error:", err)
-			continue
-		}
-
-		jobs <- tx
-	}
+	select {}
 }
 
 func worker(
-	id int,
-	jobs <-chan Transaction,
-	db *sql.DB,
-	rdb *redis.Client,
-	ctx context.Context,
+    id int,
+    db *sql.DB,
+    rdb *redis.Client,
+    ctx context.Context,
 ) {
+    for {
 
-	for tx := range jobs {
+        result, err := rdb.BLPop(
+            ctx,
+            5*time.Second,
+            "tx_queue",
+        ).Result()
 
-		// simulasi processing
-		time.Sleep(20 * time.Millisecond)
+        if err != nil {
+            log.Printf(
+                "Worker %d Redis Error: %v",
+                id,
+                err,
+            )
 
-		tx.Status = "SUCCESS"
+			time.Sleep(3*time.Second)
+            continue
+        }
 
-		_, err := db.Exec(
-			"INSERT INTO transactions (id, user_id, amount, status) VALUES ($1, $2, $3, $4)",
-			tx.ID,
-			tx.UserID,
-			tx.Amount,
-			tx.Status,
-		)
+        payload := result[1]
 
-		if err != nil {
+        var tx Transaction
 
-			log.Printf("Worker %d DB Error: %v", id, err)
+        err = json.Unmarshal(
+            []byte(payload),
+            &tx,
+        )
 
-			continue
-		}
+        if err != nil {
+            continue
+        }
 
-		rdb.Set(
-			ctx,
-			"tx_status:"+tx.ID,
-			"SUCCESS",
-			5*time.Minute,
-		)
+        // proses transaksi
+        tx.Status = "SUCCESS"
 
-		fmt.Printf(
-			"Worker %d processed TX %s\n",
-			id,
-			tx.ID,
-		)
-	}
+        _, err = db.Exec(
+            "INSERT INTO transactions (id,user_id,amount,status) VALUES ($1,$2,$3,$4)",
+            tx.ID,
+            tx.UserID,
+            tx.Amount,
+            tx.Status,
+        )
+
+        if err != nil {
+            continue
+        }
+
+        fmt.Printf(
+            "Worker %d processed %s\n",
+            id,
+            tx.ID,
+        )
+    }
 }

@@ -1,0 +1,2 @@
+capstone-cimb/load-test/results/*
+!capstone-cimb/load-test/results/.gitkeep

@@ -1,16 +1,23 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
+import { textSummary } from 'https://jslib.k6.io/k6-summary/0.1.0/index.js';
 
 // konfigurasi untuk load test dengan beberapa tahap dan target SLO untuk latency Read dan Write
 export const options = {
   stages: [
-    { duration: '10s', target: 50 },  
-    { duration: '20s', target: 10 },
-    { duration: '20s', target: 50 },
-    { duration: '20s', target: 100 },
-    { duration: '20s', target: 200 },
-    { duration: '30s', target: 300 }, 
-    { duration: '10s', target: 0 },   
+    // { duration: '10s', target: 30 },   // normal load
+    // { duration: '1s', target: 500 },   // instant spike
+    // { duration: '19s', target: 500 },  // hold spike
+    // { duration: '1s', target: 30 },    // instant recovery
+    // { duration: '9s', target: 30 },    // hold normal
+    // { duration: '5s', target: 0 },
+    
+    { duration: '10s', target: 10 },   // normal load
+    { duration: '1s', target: 10 },   // instant spike
+    { duration: '19s', target: 10 },  // hold spike
+    { duration: '1s', target: 10 },    // instant recovery
+    { duration: '9s', target: 10 },    // hold normal
+    { duration: '5s', target: 0 },
   ],
   thresholds: {
     // memisahkan target SLO antara Read dan Write menggunakan 'tags'
@@ -71,3 +78,15 @@ export default function () {
   // mencegah crash dan mengurangi beban CPU k6
   sleep(0.01);
 }
+
+
+// export function handleSummary(data) {
+//   const timestamp = new Date()
+//     .toISOString()
+//     .replace(/[:.]/g, '-');
+
+//   return {
+//     [`load-test/results/summary-${timestamp}.json`]: JSON.stringify(data, null, 2),
+//     stdout: textSummary(data, { indent: ' ', enableColors: true }),
+//   };
+// }

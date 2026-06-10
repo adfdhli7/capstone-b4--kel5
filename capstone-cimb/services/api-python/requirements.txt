@@ -1,5 +1,6 @@
 fastapi
 uvicorn
 redis
-psycopg2-binary
+# psycopg2-binary
+psycopg[binary,pool]
 prometheus-fastapi-instrumentator

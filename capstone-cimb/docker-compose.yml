@@ -17,6 +17,15 @@ services:
   api-service:
     build: ./services/api-python
     restart: always
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 2G
+        reservations:
+          cpus: '0.25'
+          memory: 250M
     environment:
       - REDIS_URL=redis://redis:6379/0
       - DB_URL=postgresql://admin:password@postgres:5432/cimb_db
@@ -32,6 +41,15 @@ services:
   # 3. Async Worker (Golang)
   worker-service:
     build: ./services/worker-golang
+    deploy:
+      replicas: 5
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 2G
+        reservations:
+          cpus: '0.25'
+          memory: 250M
     environment:
       - REDIS_URL=redis:6379
       - DB_URL=postgres://admin:password@postgres:5432/cimb_db?sslmode=disable
