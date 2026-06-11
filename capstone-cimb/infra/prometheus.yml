@@ -4,7 +4,9 @@ global:
 scrape_configs:
   - job_name: 'cimb-api'
     static_configs:
-      - targets: ['api-service:8000']
+      - targets: ['capstone-cimb-api-service-1:8000']
+      - targets: ['capstone-cimb-api-service-2:8000']
+      - targets: ['capstone-cimb-api-service-3:8000']
     
   - job_name: 'cadvisor'
     static_configs:

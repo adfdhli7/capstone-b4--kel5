@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 import redis.asyncio as redis
 import json
 import uuid
@@ -7,7 +7,8 @@ from prometheus_fastapi_instrumentator import Instrumentator
 import time
 from redis.exceptions import TimeoutError
 from psycopg_pool import AsyncConnectionPool
-from contextlib import asynccontextmanager
+from prometheus_client import Counter, generate_latest
+# from contextlib import asynccontextmanager
 
 db_pool = AsyncConnectionPool(
     conninfo=(
@@ -47,7 +48,20 @@ circuit_open = False
 last_failure_time = 0
 
 # Integrasi Prometheus Metrics
-Instrumentator().instrument(app).expose(app)
+# Instrumentator().instrument(app).expose(app)
+
+REQUEST_COUNT = Counter(
+    "http_requests_total",
+    "Total HTTP Requests",
+    ["method", "status"]
+)
+
+@app.get("/metrics")
+async def metrics():
+    return Response(
+        content=generate_latest(),
+        media_type="text/plain"
+    )
 
 @app.on_event("startup")
 async def startup_event():
@@ -73,7 +87,13 @@ async def shutdown_event():
 # ENDPOINT WRITE (Masuk ke Message Queue)
 @app.post("/transaction")
 async def create_transaction(user_id: int, amount: float):
+    
     if is_circuit_open():
+        REQUEST_COUNT.labels(
+            method="POST",
+            status="503"
+        ).inc()
+
         return JSONResponse(
             status_code=503,
             content={
@@ -106,6 +126,11 @@ async def create_transaction(user_id: int, amount: float):
 
         failure_count = 0
 
+        REQUEST_COUNT.labels(
+            method="POST",
+            status="200"
+        ).inc()
+
         return {"message": "Transaction queued", "tx_id": tx_id}
 
     except Exception as e:
@@ -130,9 +155,13 @@ async def create_transaction(user_id: int, amount: float):
                     )
                     
                 await conn.commit()
-
-            # conn.commit()
+                
             print("ADDED DATA WITH DATABASE")
+
+            REQUEST_COUNT.labels(
+                method="POST",
+                status="200"
+            ).inc()
 
             return {"message": "Transaction queried to Database", "tx_id": tx_id}
 
@@ -146,6 +175,11 @@ async def create_transaction(user_id: int, amount: float):
             if failure_count >= FAILURE_THRESHOLD:
                 circuit_open = True
                 last_failure_time = time.time()
+            
+            REQUEST_COUNT.labels(
+                method="POST",
+                status="503"
+            ).inc()
 
             return JSONResponse(
                 status_code=503,
@@ -160,7 +194,7 @@ async def create_transaction(user_id: int, amount: float):
 # ENDPOINT READ (Caching Strategy)
 @app.get("/inquiry/{tx_id}")
 async def transaction_inquiry(tx_id: str):
-
+    
     cached_status = None
 
     try:
@@ -172,7 +206,12 @@ async def transaction_inquiry(tx_id: str):
         print("REDIS ERROR:", e)
     
     
-    if cached_status:
+    if cached_status:    
+        REQUEST_COUNT.labels(
+            method="GET",
+            status="200"
+        ).inc()
+
         return {"tx_id": tx_id, "status": cached_status, "source": "cache"}
 
     # 2. Jika tidak ada di cache, baru cek Database (Lebih Lambat)
@@ -200,7 +239,18 @@ async def transaction_inquiry(tx_id: str):
             print("CACHE STORE TO REDIS SUCCESSED")
         except:
             print("CACHE STORE TO REDIS FAILED")
+                
+        REQUEST_COUNT.labels(
+            method="GET",
+            status="200"
+        ).inc()
+
         return {"tx_id": tx_id, "status": result[0], "source": "database"}
+                
+    REQUEST_COUNT.labels(
+        method="GET",
+        status="404"
+    ).inc()
     
     raise HTTPException(status_code=404, detail="Transaction not found")
 
