@@ -81,6 +81,9 @@ services:
   # 5. Monitoring
   prometheus:
     image: prom/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --web.enable-remote-write-receiver
     volumes:
       - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
