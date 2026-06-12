@@ -5,13 +5,13 @@ import { textSummary } from 'https://jslib.k6.io/k6-summary/0.1.0/index.js';
 // Konfigurasi untuk simulasi Peak Load / Spike
 export const options = {
   stages: [
-    { duration: '1s', target: 30 },   // 10 detik pertama naik/stabil di 30 VU
-    { duration: '9s', target: 30 },   // 10 detik pertama naik/stabil di 30 VU
-    { duration: '1s', target: 500 },  // Detik 10-30 (durasi 20s): Ledakan beban menjadi 500 VU
-    { duration: '19s', target: 500 },  // Detik 10-30 (durasi 20s): Ledakan beban menjadi 500 VU
-    { duration: '1s', target: 30 },   // 10 detik terakhir kembali turun ke 30 VU
-    { duration: '10s', target: 30 },   // 10 detik terakhir kembali turun ke 30 VU
-    { duration: '5s', target: 0 },     // Pendinginan turun terus hingga 0
+    { duration: '1s', target: 30 },
+    { duration: '9s', target: 30 },
+    { duration: '1s', target: 500 },
+    { duration: '19s', target: 500 },
+    { duration: '1s', target: 30 },
+    { duration: '10s', target: 30 },
+    { duration: '5s', target: 0 },
   ],
   thresholds: {
     'http_req_duration{name:POST /transaction}': ['p(95)<500'], // Latency Write p95
@@ -35,7 +35,7 @@ export default function () {
   // Cek hasil Write
   check(writeRes, {
     '📝 Write Status 200 (Masuk Antrean)': (r) => r.status === 200,
-    '🛡️ Write Status 429/503 (Ditolak Sistem)': (r) => r.status === 429 || r.status === 503, // Diaktifkan kembali untuk memantau proteksi Nginx/Circuit Breaker
+    // '🛡️ Write Status 429/503 (Ditolak Sistem)': (r) => r.status === 429 || r.status === 503, // Diaktifkan kembali untuk memantau proteksi Nginx/Circuit Breaker
   });
 
   // Bagian read untuk melakukan inquiry jika write berhasil
