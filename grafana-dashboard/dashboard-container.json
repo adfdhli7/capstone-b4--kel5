@@ -72,7 +72,10 @@
                         "expr": "rate(container_cpu_usage_seconds_total{\n  container_label_com_docker_compose_service=\"worker-service\"\n}[1m])",
                         "instant": false,
                         "legendFormat": "{{name}}",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -191,7 +194,10 @@
                         "editorMode": "code",
                         "expr": "container_memory_usage_bytes{\n  container_label_com_docker_compose_service=\"api-service\"\n}",
                         "legendFormat": "{{name}}",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -310,7 +316,10 @@
                         "editorMode": "code",
                         "expr": "container_memory_usage_bytes{\n  container_label_com_docker_compose_service=\"worker-service\"\n}",
                         "legendFormat": "{{name}}",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -429,7 +438,10 @@
                         "editorMode": "code",
                         "expr": "count(\n  container_last_seen{\n    container_label_com_docker_compose_service=\"worker-service\"\n  }\n)",
                         "legendFormat": "__auto",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -513,7 +525,10 @@
                         "editorMode": "code",
                         "expr": "sum(\n  container_memory_usage_bytes{\n    container_label_com_docker_compose_service=\"worker-service\"\n  }\n)",
                         "legendFormat": "__auto",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -598,7 +613,10 @@
                         "editorMode": "code",
                         "expr": "sum(\n  rate(\n    container_cpu_usage_seconds_total{\n      container_label_com_docker_compose_service=\"worker-service\"\n    }[1m]\n  )\n)",
                         "legendFormat": "__auto",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -684,7 +702,10 @@
                         "editorMode": "code",
                         "expr": "count(\n  container_last_seen{\n    container_label_com_docker_compose_service=\"api-service\"\n  }\n)",
                         "legendFormat": "__auto",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -768,7 +789,10 @@
                         "editorMode": "code",
                         "expr": "sum(\n  container_memory_usage_bytes{\n    container_label_com_docker_compose_service=\"api-service\"\n  }\n)",
                         "legendFormat": "{{name}}",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -853,7 +877,10 @@
                         "editorMode": "code",
                         "expr": "sum(\n  rate(\n    container_cpu_usage_seconds_total{\n      container_label_com_docker_compose_service=\"api-service\"\n    }[1m]\n  )\n)",
                         "legendFormat": "{{name}}",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -940,7 +967,10 @@
                         "expr": "rate(container_cpu_usage_seconds_total{\n  container_label_com_docker_compose_service=\"api-service\"\n}[1m])",
                         "instant": false,
                         "legendFormat": "{{name}}",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",

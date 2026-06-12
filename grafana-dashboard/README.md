@@ -387,6 +387,229 @@ sum(k6_http_reqs_total{
 
 ---
 
+## Dashboard 3 - SLA Compliance
+
+![SLA Compliance](screenshoot/sla-dashboard.png)
+
+Dashboard ini digunakan untuk memantau **Service Level Agreement (SLA)** sistem secara real-time, dengan fokus pada availability, error rate, resource health, dan performa load testing.
+
+### SLO Definitions
+
+| SLO | Target | SLI | Sumber Data |
+|-----|--------|-----|-------------|
+| **Transaction Availability** | >= 99.5% | `(POST 200 / POST total) * 100` | http_requests_total (Prometheus) |
+| **Inquiry Availability** | >= 99.0% | `(GET 200 / GET total) * 100` | http_requests_total (Prometheus) |
+| **Circuit Breaker Uptime** | 0 failures | `sum(increase(503[5m])) = 0` | http_requests_total (Prometheus) |
+| **API Replica Health** | 3/3 replicas running | `count(container_last_seen{api-service})` | cAdvisor |
+| **Worker Replica Health** | 5/5 replicas running | `count(container_last_seen{worker-service})` | cAdvisor |
+| **Latency (Load Test)** | p95 < 500ms | `histogram_quantile(0.95, k6_http_req_duration)` | K6 Remote Write |
+
+---
+
+### Row 1: SLO Compliance Summary
+
+Menampilkan status SLO secara instan dengan warna:
+- **Hijau**: SLO terpenuhi
+- **Kuning**: Mendekati batas SLO (warning)
+- **Merah**: SLO dilanggar
+
+#### POST Availability
+
+Menampilkan persentase keberhasilan endpoint transaksi dalam 5 menit terakhir.
+
+Metric:
+```promql
+100 - (sum(rate(http_requests_total{method="POST",status="503"}[5m])) 
+       / sum(rate(http_requests_total{method="POST"}[5m])) * 100)
+```
+
+Threshold:
+- **Hijau**: >= 99.5% (SLO terpenuhi)
+- **Kuning**: >= 99%
+- **Merah**: < 99% (SLO dilanggar)
+
+---
+
+#### GET Availability
+
+Menampilkan persentase keberhasilan endpoint inquiry dalam 5 menit terakhir.
+
+Metric:
+```promql
+(sum(rate(http_requests_total{method="GET",status="200"}[5m])) 
+ / sum(rate(http_requests_total{method="GET"}[5m]))) * 100
+```
+
+Threshold:
+- **Hijau**: >= 99%
+- **Kuning**: >= 95%
+- **Merah**: < 95%
+
+---
+
+#### Circuit Breaker
+
+Menampilkan status circuit breaker. Hijau = CLOSED (normal), Merah = OPEN (sedang menolak request).
+
+Metric:
+```promql
+sum(increase(http_requests_total{method="POST",status="503"}[5m]))
+```
+
+Nilai:
+- **0** = Circuit breaker CLOSED (hijau)
+- **> 0** = Circuit breaker OPEN atau error terjadi (merah)
+
+---
+
+#### API Replicas
+
+Menampilkan jumlah instance API Service yang aktif.
+
+Metric:
+```promql
+count(container_last_seen{
+  container_label_com_docker_compose_service="api-service"
+})
+```
+
+Threshold: 3 = hijau, < 3 = merah
+
+---
+
+#### Worker Replicas
+
+Menampilkan jumlah Worker Service yang aktif.
+
+Metric:
+```promql
+count(container_last_seen{
+  container_label_com_docker_compose_service="worker-service"
+})
+```
+
+Threshold: 5 = hijau, < 5 = merah
+
+---
+
+### Row 2: Availability & Error Trends
+
+#### POST Availability Trend
+
+Grafik availability endpoint transaksi dari waktu ke waktu, dengan garis SLO target di 99.5%.
+
+Metric:
+```promql
+100 - (rate(http_requests_total{method="POST",status="503"}[1m]) 
+       / rate(http_requests_total{method="POST"}[1m]) * 100)
+```
+
+---
+
+#### GET Availability Trend
+
+Grafik availability endpoint inquiry dari waktu ke waktu, dengan garis SLO target di 99%.
+
+Metric:
+```promql
+rate(http_requests_total{method="GET",status="200"}[1m]) 
+/ rate(http_requests_total{method="GET"}[1m]) * 100
+```
+
+---
+
+### Row 3: Error & Circuit Breaker
+
+#### Error Rate
+
+Menampilkan rate error 503 (circuit breaker / database failure) dan 404 (transaksi tidak ditemukan).
+
+Metrics:
+```promql
+# 503 - POST (circuit breaker / DB error)
+rate(http_requests_total{method="POST",status="503"}[1m])
+
+# 404 - GET (not found)
+rate(http_requests_total{method="GET",status="404"}[1m])
+```
+
+---
+
+### Row 4: Service Resource Health
+
+Menampilkan penggunaan CPU dan memory per container untuk API Service dan Worker Service.
+
+#### API Service CPU Usage (per container)
+
+```promql
+rate(container_cpu_usage_seconds_total{
+  container_label_com_docker_compose_service="api-service"
+}[1m])
+```
+
+#### API Service Memory (per container)
+
+```promql
+container_memory_usage_bytes{
+  container_label_com_docker_compose_service="api-service"
+}
+```
+
+#### Worker Service CPU Usage (per container)
+
+```promql
+rate(container_cpu_usage_seconds_total{
+  container_label_com_docker_compose_service="worker-service"
+}[1m])
+```
+
+#### Worker Service Memory (per container)
+
+```promql
+container_memory_usage_bytes{
+  container_label_com_docker_compose_service="worker-service"
+}
+```
+
+---
+
+### Row 5: Load Test Performance (K6)
+
+Panel ini hanya aktif saat load testing K6 berjalan dengan Prometheus Remote Write.
+
+#### Throughput (K6)
+
+Menampilkan request rate selama load testing.
+
+Metrics:
+```promql
+# Total requests per second
+sum(rate(k6_http_reqs_total[1m]))
+
+# Successful requests per second
+sum(rate(k6_http_reqs_total{status="200"}[1m]))
+```
+
+---
+
+#### Latency Percentiles (K6)
+
+Menampilkan response time percentiles (p50, p95, p99) dengan SLO target p95 < 500ms.
+
+Metrics:
+```promql
+# p50 latency
+histogram_quantile(0.50, sum(rate(k6_http_req_duration_bucket[1m])) by (le))
+
+# p95 latency (SLO target: < 500ms)
+histogram_quantile(0.95, sum(rate(k6_http_req_duration_bucket[1m])) by (le))
+
+# p99 latency
+histogram_quantile(0.99, sum(rate(k6_http_req_duration_bucket[1m])) by (le))
+```
+
+---
+
 ### GET Requests
 
 Menampilkan throughput endpoint inquiry.
