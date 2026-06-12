@@ -70,7 +70,10 @@
                         "editorMode": "code",
                         "expr": "sum(rate(k6_http_reqs_total[1m]))",
                         "legendFormat": "Total",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -92,7 +95,10 @@
                         "expr": "sum(rate(k6_http_reqs_total{status=\"200\"}[1m]))",
                         "instant": false,
                         "legendFormat": "200 OK",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "B",
@@ -213,7 +219,10 @@
                         "editorMode": "code",
                         "expr": "sum(k6_http_reqs_total{url=\"GET /inquiry\"})",
                         "legendFormat": "__auto",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -304,7 +313,10 @@
                         "editorMode": "code",
                         "expr": "sum(k6_http_reqs_total{status=\"200\", url=\"GET /inquiry\"})",
                         "legendFormat": "__auto",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -395,7 +407,10 @@
                         "editorMode": "code",
                         "expr": "sum(k6_http_reqs_total{status=\"200\", url=\"GET /inquiry\"})/sum(k6_http_reqs_total{url=\"GET /inquiry\"})*100",
                         "legendFormat": "__auto",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -479,7 +494,10 @@
                         "editorMode": "code",
                         "expr": "sum(rate(k6_http_reqs_total{url=\"GET /inquiry\"}[1m]))",
                         "legendFormat": "Total",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -501,7 +519,10 @@
                         "expr": "sum(rate(k6_http_reqs_total{url=\"GET /inquiry\", status=\"200\"}[1m]))",
                         "instant": false,
                         "legendFormat": "200 OK",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "B",
@@ -619,7 +640,10 @@
                         "editorMode": "code",
                         "expr": "sum(rate(k6_http_reqs_total{url=\"POST /transaction\"}[1m]))",
                         "legendFormat": "Total",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -641,7 +665,10 @@
                         "expr": "sum(rate(k6_http_reqs_total{url=\"POST /transaction\", status=\"200\"}[1m]))",
                         "instant": false,
                         "legendFormat": "200 OK",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "B",
@@ -759,7 +786,10 @@
                         "editorMode": "code",
                         "expr": "sum(k6_http_reqs_total)",
                         "legendFormat": "Total",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -854,7 +884,10 @@
                         "editorMode": "code",
                         "expr": "sum(k6_http_reqs_total{status=\"200\"})",
                         "legendFormat": "__auto",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -949,7 +982,10 @@
                         "editorMode": "code",
                         "expr": "sum(k6_http_reqs_total{status=\"200\"})/sum(k6_http_reqs_total)*100",
                         "legendFormat": "__auto",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -1033,7 +1069,10 @@
                         "editorMode": "code",
                         "expr": "sum(k6_http_reqs_total{url=\"POST /transaction\"})",
                         "legendFormat": "__auto",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -1128,7 +1167,10 @@
                         "editorMode": "code",
                         "expr": "sum(k6_http_reqs_total{status=\"200\", url=\"POST /transaction\"})",
                         "legendFormat": "__auto",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
@@ -1223,7 +1265,10 @@
                         "editorMode": "code",
                         "expr": "sum(k6_http_reqs_total{status=\"200\", url=\"POST /transaction\"})/sum(k6_http_reqs_total{url=\"POST /transaction\"})*100",
                         "legendFormat": "__auto",
-                        "range": true
+                        "range": true,
+                        "datasource": {
+                          "name": "ffmpjh670ym0we"
+                        }
                       }
                     },
                     "refId": "A",
